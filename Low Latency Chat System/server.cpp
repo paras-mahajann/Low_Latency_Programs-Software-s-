@@ -1,52 +1,62 @@
-#include<iostream>
-#include<unistd.h>
+#include <iostream>
 #include <arpa/inet.h>
-#include<thread>
+#include <unistd.h>
+#include <thread>
 
 using namespace std;
 
-void handleClient(int clientSocket){
+void handleClient(int clientSocket)
+{
+
     char buffer[1024];
 
-    while(true){
-        int bytes = recv(clientSocket,buffer,sizeof(buffer),0);
-        if(bytes<=0){
-            cout<<"Client Disconnected"<<endl;
+    while (true)
+    {
+        int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+        if (bytesReceived <= 0)
+        {
+            cout << "Client disconnected\n";
             break;
         }
 
-        buffer[bytes] = '\0';
-        cout<<"Client: "<<buffer<<endl;
+        buffer[bytesReceived] = '\0';
 
-        send(clientSocket,buffer,bytes,0);
+        cout<<"Client says: "<<buffer<<endl;
+
+        send(clientSocket,buffer,sizeof(buffer),0);
+
     }
 
     close(clientSocket);
 }
 
-int main(){
-    int serverSocket = socket(AF_INET,SOCK_STREAM,0);
-    
-    sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(8080);
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
 
-    bind(serverSocket,(sockaddr*)&serverAddr,sizeof(serverAddr));
-    listen(serverSocket,5);
+int main()
+{
+    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
-    cout<<"Server started on port 8080...\n";
+    sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(8080);
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
 
+    bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
 
-    while(true){
-        int clientSocket = accept(serverSocket,NULL,NULL);
-        thread t(handleClient,clientSocket);
+    listen(serverSocket, 5);
+    cout << "server is running on port 8080" << endl;
+
+    while (true)
+    {
+        int clientSocket = accept(serverSocket, nullptr, nullptr);
+
+        cout << "New Client connected..\n";
+
+        thread t(handleClient, clientSocket);
+
         t.detach();
     }
 
-
     close(serverSocket);
-
 
     return 0;
 }
